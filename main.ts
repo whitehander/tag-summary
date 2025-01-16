@@ -243,7 +243,8 @@ export default class SummaryPlugin extends Plugin {
 				
 				// Remove tags from blocks
 				if (this.settings.removetags) {
-					paragraph = paragraph.replace(/#[\p{L}0-9_\-/#]+/gu, "");
+					paragraph = paragraph.replace(/(?<!^)(?<!\n)#[\w0-9_\-/#]+/gm, "");
+
 				}
 
 				// Add link to original note
