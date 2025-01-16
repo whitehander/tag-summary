@@ -56,6 +56,7 @@ export default class SummaryPlugin extends Plugin {
 				let tags: string[] = [];
 				let include: string[] = [];
 				let exclude: string[] = [];
+				let sort = this.settings.sort;
 
 				// Process rows inside codeblock
 				const rows = source.split("\n").filter((row) => row.length > 0);
@@ -116,8 +117,8 @@ export default class SummaryPlugin extends Plugin {
 						const content = line.replace(/^\s*sort:/, "").trim();
 
 						// Get the sort order and assign it to the settings variable
-						if (content == "ASC" || content == "DESC") {
-							this.settings.sort = content;
+						if (content == "ASC" || content == "DESC" || content == "asc" || content == "desc") {
+							sort = content;
 						}
 					}
 				});
@@ -129,7 +130,8 @@ export default class SummaryPlugin extends Plugin {
 						tags,
 						include,
 						exclude,
-						ctx.sourcePath
+						ctx.sourcePath,
+						sort
 					);
 				} else {
 					this.createEmptySummary(el);
@@ -154,7 +156,8 @@ export default class SummaryPlugin extends Plugin {
 		tags: string[],
 		include: string[],
 		exclude: string[],
-		filePath: string
+		filePath: string,
+		sort: string
 	) {
 		const validTags = tags.concat(include); // All the tags selected by the user
 
@@ -175,7 +178,7 @@ export default class SummaryPlugin extends Plugin {
 
 		// Sort files based on settings
 		listFiles = listFiles.sort((file1, file2) => {
-			if (this.settings.sort === "ASC") {
+			if (sort === "ASC" || sort === "asc") {
 				if (file1.path < file2.path) return -1;
 				if (file1.path > file2.path) return 1;
 				return 0;
