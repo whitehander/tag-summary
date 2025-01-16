@@ -294,7 +294,7 @@ export default class SummaryPlugin extends Plugin {
 				// Remove tags from blocks
 				if (this.settings.removetags) {
 					paragraph = paragraph.replace(
-						/(?<!\S)#(?!#)[\p{L}0-9_\-/#]+/gu,
+						/#(?![#\s])[\p{L}0-9_\-/#]+/gu,
 						""
 					);
 				}
