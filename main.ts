@@ -1,5 +1,4 @@
-
-import { Editor, Plugin, MarkdownRenderer, getAllTags, TFile } from 'obsidian';
+import { Editor, Plugin, MarkdownRenderer, getAllTags, TFile } from "obsidian";
 import { SummarySettingTab } from "./settings";
 import { SummaryModal } from "./summarytags";
 
@@ -8,14 +7,14 @@ interface SummarySettings {
 	includelink: boolean;
 	removetags: boolean;
 	listparagraph: boolean;
- 	includechildren: boolean;
+	includechildren: boolean;
 }
 const DEFAULT_SETTINGS: Partial<SummarySettings> = {
 	includecallout: true,
 	includelink: true,
 	removetags: false,
 	listparagraph: true,
- 	includechildren: true,
+	includechildren: true,
 };
 export default class SummaryPlugin extends Plugin {
 	settings: SummarySettings;
@@ -48,83 +47,104 @@ export default class SummaryPlugin extends Plugin {
 		});
 
 		// Post processor
-		this.registerMarkdownCodeBlockProcessor("add-summary", async (source, el, ctx) => {
-			// Initialize tag list
-			let tags: string[] = Array();
-			let include: string[] = Array();
-			let exclude: string[] = Array();
+		this.registerMarkdownCodeBlockProcessor(
+			"add-summary",
+			async (source, el, ctx) => {
+				// Initialize tag list
+				let tags: string[] = [];
+				let include: string[] = [];
+				let exclude: string[] = [];
 
-			// Process rows inside codeblock
-			const rows = source.split("\n").filter((row) => row.length > 0);
-			rows.forEach((line) => {
-				// Check if the line specifies the tags (OR)
-				if (line.match(/^\s*tags:[\p{L}0-9_\-/# ]+$/gu)) {
-					const content = line.replace(/^\s*tags:/, "").trim();
+				// Process rows inside codeblock
+				const rows = source.split("\n").filter((row) => row.length > 0);
+				rows.forEach((line) => {
+					// Check if the line specifies the tags (OR)
+					if (line.match(/^\s*tags:[\p{L}0-9_\-/# ]+$/gu)) {
+						const content = line.replace(/^\s*tags:/, "").trim();
 
-					// Get the list of valid tags and assign them to the tags variable
-					let list = content.split(/\s+/).map((tag) => tag.trim());
-					list = list.filter((tag) => {
-						if (tag.match(/^#[\p{L}]+[^#]*$/u)) {
-							return true;
-						} else {
-							return false;
-						}
-					});
-					tags = list;
+						// Get the list of valid tags and assign them to the tags variable
+						let list = content
+							.split(/\s+/)
+							.map((tag) => tag.trim());
+						list = list.filter((tag) => {
+							if (tag.match(/^#[\p{L}]+[^#]*$/u)) {
+								return true;
+							} else {
+								return false;
+							}
+						});
+						tags = list;
+					}
+					// Check if the line specifies the tags to include (AND)
+					if (line.match(/^\s*include:[\p{L}0-9_\-/# ]+$/gu)) {
+						const content = line.replace(/^\s*include:/, "").trim();
+
+						// Get the list of valid tags and assign them to the include variable
+						let list = content
+							.split(/\s+/)
+							.map((tag) => tag.trim());
+						list = list.filter((tag) => {
+							if (tag.match(/^#[\p{L}]+[^#]*$/u)) {
+								return true;
+							} else {
+								return false;
+							}
+						});
+						include = list;
+					}
+					// Check if the line specifies the tags to exclude (NOT)
+					if (line.match(/^\s*exclude:[\p{L}0-9_\-/# ]+$/gu)) {
+						const content = line.replace(/^\s*exclude:/, "").trim();
+
+						// Get the list of valid tags and assign them to the exclude variable
+						let list = content
+							.split(/\s+/)
+							.map((tag) => tag.trim());
+						list = list.filter((tag) => {
+							if (tag.match(/^#[\p{L}]+[^#]*$/u)) {
+								return true;
+							} else {
+								return false;
+							}
+						});
+						exclude = list;
+					}
+				});
+
+				// Create summary only if the user specified some tags
+				if (tags.length > 0 || include.length > 0) {
+					await this.createSummary(
+						el,
+						tags,
+						include,
+						exclude,
+						ctx.sourcePath
+					);
+				} else {
+					this.createEmptySummary(el);
 				}
-				// Check if the line specifies the tags to include (AND)
-				if (line.match(/^\s*include:[\p{L}0-9_\-/# ]+$/gu)) {
-					const content = line.replace(/^\s*include:/, "").trim();
-
-					// Get the list of valid tags and assign them to the include variable
-					let list = content.split(/\s+/).map((tag) => tag.trim());
-					list = list.filter((tag) => {
-						if (tag.match(/^#[\p{L}]+[^#]*$/u)) {
-							return true;
-						} else {
-							return false;
-						}
-					});
-					include = list;
-				}
-				// Check if the line specifies the tags to exclude (NOT)
-				if (line.match(/^\s*exclude:[\p{L}0-9_\-/# ]+$/gu)) {
-					const content = line.replace(/^\s*exclude:/, "").trim();
-
-					// Get the list of valid tags and assign them to the exclude variable
-					let list = content.split(/\s+/).map((tag) => tag.trim());
-					list = list.filter((tag) => {
-						if (tag.match(/^#[\p{L}]+[^#]*$/u)) {
-							return true;
-						} else {
-							return false;
-						}
-					});
-					exclude = list;
-				}
-			});
-
-			// Create summary only if the user specified some tags
-			if (tags.length > 0 || include.length > 0) {
-				await this.createSummary(el, tags, include, exclude, ctx.sourcePath);
-			} else {
-				this.createEmptySummary(el);
 			}
-		});  
+		);
 	}
 
 	// Show empty summary when the tags are not found
 	createEmptySummary(element: HTMLElement) {
 		const container = createEl("div");
 		container.createEl("span", {
-			attr: { style: 'color: var(--text-error) !important;' },
-			text: "There are no blocks that match the specified tags." 
+			attr: { style: "color: var(--text-error) !important;" },
+			text: "There are no blocks that match the specified tags.",
 		});
 		element.replaceWith(container);
 	}
 
 	// Load the blocks and create the summary
-	async createSummary(element: HTMLElement, tags: string[], include: string[], exclude: string[], filePath: string) {
+	async createSummary(
+		element: HTMLElement,
+		tags: string[],
+		include: string[],
+		exclude: string[],
+		filePath: string
+	) {
 		const validTags = tags.concat(include); // All the tags selected by the user
 
 		// Get files
@@ -140,7 +160,7 @@ export default class SummaryPlugin extends Plugin {
 				return true;
 			}
 			return false;
-        });
+		});
 
 		// Sort files alphabetically
 		listFiles = listFiles.sort((file1, file2) => {
@@ -154,18 +174,20 @@ export default class SummaryPlugin extends Plugin {
 		});
 
 		// Get files content
-		let listContents: [TFile, string][] = await this.readFiles(listFiles);
+		const listContents: [TFile, string][] = await this.readFiles(listFiles);
 
 		// Create summary ttt
-		let summary: string = "";
+		let summary = "";
 		listContents.forEach((item) => {
 			// Get files name
 			const fileName = item[0].name.replace(/.md$/g, "");
 			const filePath = item[0].path;
 
 			// Get paragraphs
-			let listParagraphs: string[] = Array();
-			const blocks = item[1].split(/\n\s*\n/).filter((row) => row.trim().length > 0);
+			const listParagraphs: string[] = [];
+			const blocks = item[1]
+				.split(/\n\s*\n/)
+				.filter((row) => row.trim().length > 0);
 
 			// Get list items
 			blocks.forEach((paragraph) => {
@@ -175,7 +197,12 @@ export default class SummaryPlugin extends Plugin {
 
 				if (listTags != null && listTags.length > 0) {
 					if (!paragraph.contains("```")) {
-						valid = this.isValidText(listTags, tags, include, exclude);
+						valid = this.isValidText(
+							listTags,
+							tags,
+							include,
+							exclude
+						);
 					}
 				}
 				if (valid) {
@@ -184,22 +211,27 @@ export default class SummaryPlugin extends Plugin {
 						listParagraphs.push(paragraph);
 					} else {
 						// Add paragraphs and the items of a list
-						let listItems: string[] = Array();
+						const listItems: string[] = [];
 						let itemText = "";
 
-						paragraph.split('\n\s*\n').forEach((line) => {
+						paragraph.split("\ns*\n").forEach((line) => {
 							let isList = false;
-							isList = line.search(/(\s*[\-\+\*]){1}|([0-9]\.){1}\s+/) != -1
-	
+							isList =
+								line.search(
+									/(\s*[-+*]){1}|([0-9]\.){1}\s+/
+								) != -1;
+
 							if (!isList) {
 								// Add normal paragraphs
 								listParagraphs.push(line);
 								itemText = "";
 							} else {
-								line.split('\n').forEach((itemLine) => {
+								line.split("\n").forEach((itemLine) => {
 									// Get the item's level
 									let level = 0;
-									const endIndex = itemLine.search(/[\-\+\*]{1}|([0-9]\.){1}\s+/);
+									const endIndex = itemLine.search(
+										/[-+*]{1}|([0-9]\.){1}\s+/
+									);
 									const tabText = itemLine.slice(0, endIndex);
 									const tabs = tabText.match(/\t/g);
 									if (tabs) {
@@ -211,9 +243,17 @@ export default class SummaryPlugin extends Plugin {
 											listItems.push(itemText);
 											itemText = "";
 										}
-										itemText = itemText.concat(itemLine + "\n");
-									} else if (this.settings.includechildren && level > 0 && itemText != "") {
-										itemText = itemText.concat(itemLine + "\n");
+										itemText = itemText.concat(
+											itemLine + "\n"
+										);
+									} else if (
+										this.settings.includechildren &&
+										level > 0 &&
+										itemText != ""
+									) {
+										itemText = itemText.concat(
+											itemLine + "\n"
+										);
 									}
 								});
 							}
@@ -227,29 +267,44 @@ export default class SummaryPlugin extends Plugin {
 						listItems.forEach((line) => {
 							listTags = line.match(/#[\p{L}0-9_\-/#]+/gu);
 							if (listTags != null && listTags.length > 0) {
-								if (this.isValidText(listTags, tags, include, exclude)) {
+								if (
+									this.isValidText(
+										listTags,
+										tags,
+										include,
+										exclude
+									)
+								) {
 									listParagraphs.push(line);
 								}
 							}
 						});
- 					}
+					}
 				}
-			})
+			});
 
 			// Process each block of text
 			listParagraphs.forEach((paragraph) => {
 				// Restore newline at the end
 				paragraph += "\n";
-				
+
 				// Remove tags from blocks
 				if (this.settings.removetags) {
-					paragraph = paragraph.replace(/(?<!^)(?<!\n)#[\w0-9_\-/#]+/gm, "");
-
+					paragraph = paragraph.replace(
+						/(?<!^)(?<!\n)#[\w0-9_\-/#]+/gm,
+						""
+					);
 				}
 
 				// Add link to original note
 				if (this.settings.includelink) {
-					paragraph = "## [[" + filePath + "|" + fileName + "]]\n" + paragraph;
+					paragraph =
+						"## [[" +
+						filePath +
+						"|" +
+						fileName +
+						"]]\n" +
+						paragraph;
 				}
 
 				// Insert the text in a callout
@@ -273,8 +328,13 @@ export default class SummaryPlugin extends Plugin {
 
 		// Add Summary
 		if (summary != "") {
-			let summaryContainer = createEl("div");
-			await MarkdownRenderer.renderMarkdown(summary, summaryContainer, this.app.workspace.getActiveFile()?.path, null);
+			const summaryContainer = createEl("div");
+			await MarkdownRenderer.renderMarkdown(
+				summary,
+				summaryContainer,
+				this.app.workspace.getActiveFile()?.path,
+				null
+			);
 			element.replaceWith(summaryContainer);
 		} else {
 			this.createEmptySummary(element);
@@ -283,17 +343,22 @@ export default class SummaryPlugin extends Plugin {
 
 	// Read Files
 	async readFiles(listFiles: TFile[]): Promise<[TFile, string][]> {
-		let list: [TFile, string][] = [];
+		const list: [TFile, string][] = [];
 		for (let t = 0; t < listFiles.length; t += 1) {
 			const file = listFiles[t];
-			let content = await this.app.vault.cachedRead(file);
+			const content = await this.app.vault.cachedRead(file);
 			list.push([file, content]);
 		}
 		return list;
 	}
 
 	// Check if tags are valid
-	isValidText(listTags: string[], tags: string[], include: string[], exclude: string[]): boolean {
+	isValidText(
+		listTags: string[],
+		tags: string[],
+		include: string[],
+		exclude: string[]
+	): boolean {
 		let valid = true;
 
 		// Check OR (tags)
@@ -308,15 +373,18 @@ export default class SummaryPlugin extends Plugin {
 		if (valid && exclude.length > 0) {
 			valid = !exclude.some((value) => listTags.includes(value));
 		}
-		return valid;		
+		return valid;
 	}
 
 	// Settings
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
 	}
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}	
+	}
 }
-
