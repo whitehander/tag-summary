@@ -111,6 +111,15 @@ export default class SummaryPlugin extends Plugin {
 						});
 						exclude = list;
 					}
+					// Check if the line specifies the sort order
+					if (line.match(/^\s*sort:[\p{L}0-9_\-/# ]+$/gu)) {
+						const content = line.replace(/^\s*sort:/, "").trim();
+
+						// Get the sort order and assign it to the settings variable
+						if (content == "ASC" || content == "DESC") {
+							this.settings.sort = content;
+						}
+					}
 				});
 
 				// Create summary only if the user specified some tags
