@@ -10,7 +10,7 @@ export class SummarySettingTab extends PluginSettingTab {
         this.plugin = plugin;
     }
     display(): void {
-        let { containerEl } = this;
+        const { containerEl } = this;
 
         containerEl.empty();
 
@@ -67,6 +67,21 @@ export class SummarySettingTab extends PluginSettingTab {
             .setValue(this.plugin.settings.includechildren)
             .onChange(async (value) => {
                 this.plugin.settings.includechildren = value;
+                await this.plugin.saveSettings();
+            })
+        );
+        new Setting(containerEl)
+        .setName("Ordering")
+        .setDesc("Order the items in the summary.")
+        .addDropdown((dropdown) =>
+            dropdown
+            .addOptions({
+                "ASC": "ASC",
+                "DESC": "DESC",
+            })
+            .setValue(this.plugin.settings.sort)
+            .onChange(async (value) => {
+                this.plugin.settings.sort = value;
                 await this.plugin.saveSettings();
             })
         );

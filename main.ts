@@ -8,6 +8,7 @@ interface SummarySettings {
 	removetags: boolean;
 	listparagraph: boolean;
 	includechildren: boolean;
+	sort: string;
 }
 const DEFAULT_SETTINGS: Partial<SummarySettings> = {
 	includecallout: true,
@@ -15,6 +16,7 @@ const DEFAULT_SETTINGS: Partial<SummarySettings> = {
 	removetags: false,
 	listparagraph: true,
 	includechildren: true,
+	sort: 'ASC',
 };
 export default class SummaryPlugin extends Plugin {
 	settings: SummarySettings;
@@ -162,13 +164,15 @@ export default class SummaryPlugin extends Plugin {
 			return false;
 		});
 
-		// Sort files alphabetically
+		// Sort files based on settings
 		listFiles = listFiles.sort((file1, file2) => {
-			if (file1.path < file2.path) {
-				return -1;
-			} else if (file1.path > file2.path) {
-				return 1;
+			if (this.settings.sort === 'ASC') {
+				if (file1.path < file2.path) return -1;
+				if (file1.path > file2.path) return 1;
+				return 0;
 			} else {
+				if (file1.path > file2.path) return -1;
+				if (file1.path < file2.path) return 1;
 				return 0;
 			}
 		});
