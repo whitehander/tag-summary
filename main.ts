@@ -16,7 +16,7 @@ const DEFAULT_SETTINGS: Partial<SummarySettings> = {
 	removetags: false,
 	listparagraph: true,
 	includechildren: true,
-	sort: 'ASC',
+	sort: "ASC",
 };
 export default class SummaryPlugin extends Plugin {
 	settings: SummarySettings;
@@ -166,7 +166,7 @@ export default class SummaryPlugin extends Plugin {
 
 		// Sort files based on settings
 		listFiles = listFiles.sort((file1, file2) => {
-			if (this.settings.sort === 'ASC') {
+			if (this.settings.sort === "ASC") {
 				if (file1.path < file2.path) return -1;
 				if (file1.path > file2.path) return 1;
 				return 0;
@@ -221,9 +221,8 @@ export default class SummaryPlugin extends Plugin {
 						paragraph.split("\ns*\n").forEach((line) => {
 							let isList = false;
 							isList =
-								line.search(
-									/(\s*[-+*]){1}|([0-9]\.){1}\s+/
-								) != -1;
+								line.search(/(\s*[-+*]){1}|([0-9]\.){1}\s+/) !=
+								-1;
 
 							if (!isList) {
 								// Add normal paragraphs
@@ -295,7 +294,7 @@ export default class SummaryPlugin extends Plugin {
 				// Remove tags from blocks
 				if (this.settings.removetags) {
 					paragraph = paragraph.replace(
-						/(?<!^)(?<!\n)#[\w0-9_\-/#]+/gm,
+						/(?<!\S)#(?!#)[\p{L}0-9_\-/#]+/gu,
 						""
 					);
 				}
