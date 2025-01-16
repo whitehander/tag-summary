@@ -1,5 +1,4 @@
 
-import { Console } from 'console';
 import { Editor, Plugin, MarkdownRenderer, getAllTags, TFile } from 'obsidian';
 import { SummarySettingTab } from "./settings";
 import { SummaryModal } from "./summarytags";
@@ -134,7 +133,7 @@ export default class SummaryPlugin extends Plugin {
 		// Filter files
 		listFiles = listFiles.filter((file) => {
 			// Remove files that do not contain the tags selected by the user
-			const cache = app.metadataCache.getFileCache(file);
+			const cache = this.app.metadataCache.getFileCache(file);
 			const tagsInFile = getAllTags(cache);
 
 			if (validTags.some((value) => tagsInFile.includes(value))) {

@@ -18,7 +18,7 @@ export class SummaryModal extends Modal {
         let listFiles = this.app.vault.getMarkdownFiles();
 
         listFiles.forEach((file) => {
-            const cache = app.metadataCache.getFileCache(file);
+            const cache = this.app.metadataCache.getFileCache(file);
             listTags = listTags.concat(getAllTags(cache));
         });
 
